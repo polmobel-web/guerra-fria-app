@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Guerra Fría — App de Estudio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Libre+Baskerville:wght@400;700&family=Courier+Prime:wght@400;700&display=swap');
+
+:root {
+  --bg: #0e0d0b;
+  --surface: #1a1814;
+  --surface2: #222018;
+  --border: #333028;
+  --accent: #c9a84c;
+  --accent-dim: #7a6228;
+  --red: #a83232;
+  --blue: #2a4f8a;
+  --text: #d8d0ba;
+  --muted: #6b6454;
+  --correct-bg: rgba(40,100,50,0.18);
+  --correct-border: #3a8a4a;
+  --correct-text: #7dcc8a;
+  --wrong-bg: rgba(120,40,40,0.18);
+  --wrong-border: #8a3a3a;
+  --wrong-text: #cc7d7d;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Libre Baskerville', Georgia, serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  font-size: 16px;
+}
+
+/* GRAIN TEXTURE */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.5;
+}
+
+/* ── SCREEN SYSTEM ── */
+.screen { display: none; min-height: 100vh; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ══════════════════════════════
+   HOME
+══════════════════════════════ */
+#home {
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+#home::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 15% 85%, rgba(168,50,50,0.12) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 15%, rgba(42,79,138,0.12) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+.home-inner { position: relative; z-index: 1; width: 100%; max-width: 400px; }
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+}
+
+.bloc-tag {
+  font-family: 'Courier Prime', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  padding: 4px 10px;
+  border: 1px solid;
+}
+
+.bloc-usa { color: #5577bb; border-color: rgba(85,119,187,0.4); }
+.bloc-ussr { color: #bb5555; border-color: rgba(187,85,85,0.4); }
+
+.vs-dot {
+  font-family: 'Courier Prime', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 2px;
+}
+
+.home-title-area { text-align: center; margin-bottom: 3.5rem; }
+
+.era-stamp {
+  display: inline-block;
+  font-family: 'Courier Prime', monospace;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--accent);
+  border: 1px solid var(--accent-dim);
+  padding: 5px 14px;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+}
+
+.main-title {
+  font-family: 'Special Elite', serif;
+  font-size: clamp(2.4rem, 10vw, 4rem);
+  color: #efe6cc;
+  line-height: 1.05;
+  text-shadow: 0 0 60px rgba(201,168,76,0.25);
+  margin-bottom: 0.4rem;
+}
+
+.main-subtitle {
+  font-family: 'Courier Prime', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.gold-line {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  margin: 1.5rem auto;
+}
+
+.tagline {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  font-style: italic;
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+}
+
+.menu-grid { display: flex; flex-direction: column; gap: 12px; }
+
+.menu-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 1.2rem 1.4rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.22s ease;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.menu-card::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  transition: all 0.2s;
+}
+
+.menu-card.test-card::after { background: var(--accent); transform: scaleY(0); transform-origin: bottom; }
+.menu-card.dev-card::after { background: var(--red); transform: scaleY(0); transform-origin: bottom; }
+.menu-card.fc-card::after { background: var(--blue); transform: scaleY(0); transform-origin: bottom; }
+
+.menu-card:hover { transform: translateX(6px); }
+.menu-card:hover::after { transform: scaleY(1); }
+.menu-card.test-card:hover { border-color: var(--accent-dim); }
+.menu-card.dev-card:hover { border-color: rgba(168,50,50,0.5); }
+.menu-card.fc-card:hover { border-color: rgba(42,79,138,0.5); }
+
+.card-code {
+  font-family: 'Courier Prime', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 5px;
+}
+
+.card-name {
+  font-family: 'Special Elite', serif;
+  font-size: 1.25rem;
+  color: #efe6cc;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.card-desc {
+  font-family: 'Courier Prime', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  display: block;
+}
+
+.card-arrow {
+  position: absolute;
+  right: 1.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'Courier Prime', monospace;
+  font-size: 18px;
+  color: var(--muted);
+  transition: color 0.2s, transform 0.2s;
+}
+.menu-card:hover .card-arrow { color: var(--text); transform: translateY(-50%) translateX(3px); }
+
+/* ══════════════════════════════
+   SHARED HEADER
+══════════════════════════════ */
+.screen-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.85rem 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+.back-btn {
+  font-family: 'Courier Prime', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.back-btn:hover { color: var(--accent); border-color: var(--accent-dim); }
+
+.screen-label {
+  font-family: 'Special Elite', serif;
+  font-size: 1rem;
+  color: #efe6cc;
+  flex: 1;
+  min-width: 0;
+}
+
+.score-badge {
+  font-family: 'Courier Prime', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+.content-wrap { flex: 1; padding: 1.4rem 1.2rem 3rem; overflow-y: auto; }
+
+/* ══════════════════════════════
+   TEST MODE
+══════════════════════════════ */
+.prog-track {
+  height: 2px;
+  background: var(--surface2);
+  margin-bottom: 1.5rem;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.prog-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+  transition: width 0.5s cubic-bezier(.4,0,.2,1);
+}
+
+.q-meta {
+  font-family: 'Courier Prime', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+
+.q-text {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: #efe6cc;
+  margin-bottom: 1.6rem;
+  font-weight: 400;
+}
+
+.opts { display: grid; gap: 10px; }
+
+.opt {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.93rem;
+  font-family: 'Libre Baskerville', serif;
+  line-height: 1.5;
+  transition: all 0.15s;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.opt-letter {
+  font-family: 'Courier Prime', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.opt:hover:not(:disabled) {
+  border-color: var(--accent-dim);
+  background: var(--surface2);
+}
+
+.opt.correct {
+  background: var(--correct-bg);
+  border-color: var(--correct-border);
+  color: var(--correct-text);
+}
+.opt.correct .opt-letter { color: var(--correct-text); }
+
+.opt.wrong {
+  background: var(--wrong-bg);
+  border-color: var(--wrong-border);
+  color: var(--wrong-text);
+}
+.opt.wrong .opt-letter { color: var(--wrong-text); }
+
+.opt:disabled { cursor: default; }
+
+.next-btn {
+  margin-top: 1.4rem;
+  width: 100%;
+  background: var(--accent);
+  color: #0e0d0b;
+  border: none;
+  padding: 0.95rem;
+  font-family: 'Special Elite', serif;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  display: none;
+  transition: opacity 0.2s;
+}
+.next-btn:hover { opacity: 0.85; }
+
+/* RESULTS */
+.results-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 1rem;
+  text-align: center;
+}
+
+.score-ring {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+  position: relative;
+  box-shadow: 0 0 30px rgba(201,168,76,0.15), inset 0 0 30px rgba(201,168,76,0.05);
+}
+
+.score-big {
+  font-family: 'Special Elite', serif;
+  font-size: 3.5rem;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.score-denom {
+  font-family: 'Courier Prime', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 2px;
+}
+
+.result-title {
+  font-family: 'Special Elite', serif;
+  font-size: 1.6rem;
+  color: #efe6cc;
+  margin-bottom: 0.5rem;
+}
+
+.result-pct {
+  font-family: 'Courier Prime', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  margin-bottom: 2rem;
+}
+
+.action-btn {
+  font-family: 'Special Elite', serif;
+  font-size: 0.95rem;
+  letter-spacing: 2px;
+  padding: 0.85rem 2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.btn-primary {
+  background: none;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+.btn-primary:hover { background: var(--accent); color: #0e0d0b; }
+
+.btn-secondary {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.btn-secondary:hover { border-color: var(--muted); color: var(--text); }
+
+/* ══════════════════════════════
+   DESARROLLO
+══════════════════════════════ */
+.dev-intro {
+  font-family: 'Courier Prime', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+}
+
+.dev-list { display: grid; gap: 10px; }
+
+.dev-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.dev-item.open { border-color: var(--accent-dim); }
+
+.dev-head {
+  padding: 1.1rem 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transition: background 0.15s;
+}
+.dev-head:hover { background: var(--surface2); }
+
+.dev-num {
+  font-family: 'Courier Prime', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  flex-shrink: 0;
+  padding-top: 3px;
+  min-width: 24px;
+}
+
+.dev-q {
+  font-size: 0.96rem;
+  line-height: 1.55;
+  color: #efe6cc;
+  flex: 1;
+}
+
+.dev-icon {
+  font-family: 'Courier Prime', monospace;
+  font-size: 20px;
+  color: var(--muted);
+  flex-shrink: 0;
+  transition: transform 0.3s, color 0.2s;
+  line-height: 1;
+}
+.dev-item.open .dev-icon { transform: rotate(45deg); color: var(--accent); }
+
+.dev-body {
+  display: none;
+  border-top: 1px solid var(--border);
+  padding: 1.2rem 1.2rem 1.2rem 3.2rem;
+}
+
+.dev-item.open .dev-body { display: block; }
+
+.dev-label {
+  font-family: 'Courier Prime', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+
+.dev-answer-text {
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: var(--muted);
+  white-space: pre-line;
+}
+
+/* ══════════════════════════════
+   FLASHCARDS
+══════════════════════════════ */
+.fc-meta {
+  text-align: center;
+  font-family: 'Courier Prime', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  margin-bottom: 1.4rem;
+}
+
+.fc-wrap {
+  perspective: 1200px;
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto 1rem;
+  height: 240px;
+  cursor: pointer;
+}
+
+.fc-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(.4,0,.2,1);
+}
+
+.fc-inner.flipped { transform: rotateY(180deg); }
+
+.fc-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.8rem;
+  text-align: center;
+}
+
+.fc-front {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.fc-back {
+  background: var(--surface2);
+  border: 1px solid var(--accent-dim);
+  transform: rotateY(180deg);
+}
+
+.fc-face-label {
+  font-family: 'Courier Prime', monospace;
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  opacity: 0.8;
+}
+
+.fc-face-text {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #efe6cc;
+}
+
+.fc-back .fc-face-text {
+  font-size: 0.9rem;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.fc-hint {
+  text-align: center;
+  font-family: 'Courier Prime', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 1.4rem;
+  letter-spacing: 1px;
+}
+
+.fc-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.fc-btn {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.75rem;
+  font-family: 'Courier Prime', monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.fc-btn:hover:not(:disabled) { border-color: var(--accent-dim); color: var(--accent); }
+.fc-btn:disabled { opacity: 0.25; cursor: default; }
+
+.fc-restart {
+  text-align: center;
+  margin-top: 1.5rem;
+  max-width: 380px;
+  margin-left: auto;
+  margin-right: auto;
+  display: none;
+}
+
+.fc-done-msg {
+  font-family: 'Special Elite', serif;
+  font-size: 1.1rem;
+  color: var(--accent);
+  margin-bottom: 1rem;
+}
+</style>
+</head>
+<body>
+
+<!-- ═════════════ HOME ═════════════ -->
+<div id="home" class="screen active">
+  <div class="home-inner">
+    <div class="top-bar">
+      <span class="bloc-tag bloc-usa">★ EE.UU.</span>
+      <span class="vs-dot">VS</span>
+      <span class="bloc-tag bloc-ussr">URSS ☭</span>
+    </div>
+
+    <div class="home-title-area">
+      <div class="era-stamp">1947 · 1991</div>
+      <h1 class="main-title">La Guerra<br>Fría</h1>
+      <p class="main-subtitle">Un periodo que estremeció al mundo</p>
+      <div class="gold-line"></div>
+      <p class="tagline">Elige una modalidad de estudio<br>para repasar el tema</p>
+    </div>
+
+    <div class="menu-grid">
+      <button class="menu-card test-card" onclick="goTo('test')">
+        <span class="card-code">MÓDULO 01</span>
+        <span class="card-name">Modo Test</span>
+        <span class="card-desc">20 preguntas · 4 opciones · puntuación final</span>
+        <span class="card-arrow">→</span>
+      </button>
+      <button class="menu-card dev-card" onclick="goTo('desarrollo')">
+        <span class="card-code">MÓDULO 02</span>
+        <span class="card-name">Preguntas de Desarrollo</span>
+        <span class="card-desc">10 preguntas con respuesta modelo</span>
+        <span class="card-arrow">→</span>
+      </button>
+      <button class="menu-card fc-card" onclick="goTo('flashcards')">
+        <span class="card-code">MÓDULO 03</span>
+        <span class="card-name">Flashcards</span>
+        <span class="card-desc">15 tarjetas · toca para ver la respuesta</span>
+        <span class="card-arrow">→</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════ TEST ═════════════ -->
+<div id="test" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="goTo('home')">← VOLVER</button>
+    <span class="screen-label">Modo Test</span>
+    <span class="score-badge" id="test-hdr-score"></span>
+  </div>
+  <div class="content-wrap" id="test-content"></div>
+</div>
+
+<!-- ═════════════ DESARROLLO ═════════════ -->
+<div id="desarrollo" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="goTo('home')">← VOLVER</button>
+    <span class="screen-label">Preguntas de Desarrollo</span>
+  </div>
+  <div class="content-wrap" id="dev-content"></div>
+</div>
+
+<!-- ═════════════ FLASHCARDS ═════════════ -->
+<div id="flashcards" class="screen">
+  <div class="screen-header">
+    <button class="back-btn" onclick="goTo('home')">← VOLVER</button>
+    <span class="screen-label">Flashcards — Preguntas Clave</span>
+  </div>
+  <div class="content-wrap" id="fc-content"></div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════
+   DATOS
+════════════════════════════════════════════ */
+
+const preguntasTest = [
+  {
+    pregunta: "¿Qué dos superpotencias protagonizaron la Guerra Fría tras la Segunda Guerra Mundial?",
+    opciones: ["EE.UU. y China", "EE.UU. y la URSS", "Gran Bretaña y Alemania", "Francia y la URSS"],
+    respuestaCorrecta: 1
+  },
+  {
+    pregunta: "¿Qué dos alianzas militares representaban a cada bloque durante la Guerra Fría?",
+    opciones: ["La Sociedad de Naciones y la ONU", "El Pacto de Varsovia y la OTAN", "El Plan Marshall y el Comecon", "El Kominform y la CIA"],
+    respuestaCorrecta: 1
+  },
+  {
+    pregunta: "¿En qué año se considera el inicio de la Guerra Fría con la formulación de la Doctrina Truman?",
+    opciones: ["1945", "1946", "1947", "1950"],
+    respuestaCorrecta: 2
+  },
+  {
+    pregunta: "¿Cómo se llamó el plan de ayuda económica estadounidense para reconstruir Europa occidental?",
+    opciones: ["Doctrina Truman", "Plan Dawes", "Plan Marshall", "Operación Overlord"],
+    respuestaCorrecta: 2
+  },
+  {
+    pregunta: "¿Qué término utilizó Winston Churchill en 1946 para describir la frontera que dividía Europa en dos bloques?",
+    opciones: ["Muro de Berlín", "Telón de Acero", "Cortina de Hierro", "Línea Maginot"],
+    respuestaCorrecta: 2
+  },
+  {
+    pregunta: "¿Cuándo tuvo lugar el Bloqueo de Berlín impuesto por la URSS?",
+    opciones: ["1945–1946", "1948–1949", "1953–1954", "1961–1962"],
+    respuestaCorrecta: 1
+  },
+  {
+    pregunta: "¿En qué año se construyó el Muro de Berlín para impedir la emigración hacia el oeste?",
+    opciones: ["1949", "1955", "1961", "1968"],
+    respuestaCorrecta: 2
+  },
+  {
+    pregunta: "¿Qué conflicto bélico enfrentó al Norte comunista con el Sur capitalista entre 1950 y 1953?",
+    opciones: ["Guerra de Vietnam", "Guerra de Corea", "Guerra de Afganistán", "Conflicto de Berlín"],
+    respuestaCorrecta: 1
+  },
+  {
+    pregunta: "¿Cuál fue el resultado de la Guerra de Corea (1950–1953)?",
+    opciones: [
+      "Reunificación bajo el comunismo",
+      "Victoria total de EE.UU.",
+      "Armisticio que mantiene la división en el paralelo 38",
+      "Retirada soviética y reunificación"
+    ],
+    respuestaCorrecta: 2
+  },
+  {
+    pregunta: "¿Qué crisis de 1962 llevó al mundo al borde de una guerra nuclear entre EE.UU. y la URSS?",
+    opciones: [
+      "Invasión de Bahía de Cochinos",
+      "Crisis de los misiles en Cuba",
+      "Primavera de Praga",
+      "Segunda Crisis de Berlín"
+    ],
+    respuestaCorrecta: 1
+  },
+  {
+    pregunta: "¿Qué presidente de EE.UU. formuló en 1947 la política de contención del comunismo?",
+    opciones: ["Eisenhower", "Kennedy", "Roosevelt", "Truman"],
+    respuestaCorrecta: 3
+  },
+  {
+    pregunta: "¿Qué fue la 'Primavera de Praga' (1968)?",
+    opciones: [
+      "Una alianza militar entre Checoslovaquia y la URSS",
+      "Un intento de reforma socialista en Checoslovaquia aplastado por la URSS",
+      "Una revuelta estudiantil en Francia",
+      "La independencia de Checoslovaquia de la URSS"
+    ],
+    respuestaCorrecta: 1
+  },
+  {
+    pregunta: "¿Qué satélite artificial lanzó la URSS en 1957, dando inicio a la carrera espacial?",
+    opciones: ["Mir", "Luna 2", "Sputnik", "Vostok 1"],
+    respuestaCorrecta: 2
+  },
+  {
+    pregunta: "¿Quién fue el primer ser humano en orbitar la Tierra, en abril de 1961?",
+    opciones: ["Neil Armstrong", "John Glenn", "Yuri Gagarin", "Valentina Tereshkova"],
+    respuestaCorrecta: 2
+  },
+  {
+    pregunta: "¿Qué política de Gorbachov impulsaba la transparencia informativa y la libertad de expresión?",
+    opciones: ["Perestroika", "Glasnost", "Détente", "Ostpolitik"],
+    respuestaCorrecta: 1
+  },
+  {
+    pregunta: "¿Qué política de Gorbachov buscaba la reestructuración económica y política de la URSS?",
+    opciones: ["Glasnost", "Détente", "Perestroika", "Kominform"],
+    respuestaCorrecta: 2
+  },
+  {
+    pregunta: "¿En qué año cayó el Muro de Berlín, símbolo del fin del bloque comunista en Europa?",
+    opciones: ["1985", "1987", "1989", "1991"],
+    respuestaCorrecta: 2
+  },
+  {
+    pregunta: "¿En qué año se disolvió oficialmente la URSS, poniendo fin a la Guerra Fría?",
+    opciones: ["1989", "1990", "1991", "1992"],
+    respuestaCorrecta: 2
+  },
+  {
+    pregunta: "¿Qué nombre recibió el período de distensión entre las superpotencias durante los años 70?",
+    opciones: ["Coexistencia Pacífica", "Détente", "Glasnost", "Ostpolitik"],
+    respuestaCorrecta: 1
+  },
+  {
+    pregunta: "¿Qué fue el 'Comecon'?",
+    opciones: [
+      "Una alianza militar del bloque oriental",
+      "Una organización de cooperación económica del bloque soviético equivalente al Plan Marshall",
+      "Un plan de reconstrucción europeo financiado por la URSS",
+      "Una agencia de inteligencia soviética"
+    ],
+    respuestaCorrecta: 1
+  }
+];
+
+const preguntasDesarrollo = [
+  {
+    pregunta: "¿Qué fue la Guerra Fría y por qué recibe ese nombre?",
+    respuestaModelo: `La Guerra Fría fue un periodo de intensa tensión geopolítica, ideológica y estratégica entre Estados Unidos y la URSS (y sus respectivos bloques de aliados) que se extendió aproximadamente desde 1947 hasta 1991.
+
+Recibe el nombre de "fría" porque nunca derivó en un conflicto armado directo entre las dos superpotencias —algo que habría sido catastrófico dada la existencia de arsenales nucleares—. La rivalidad se expresó mediante carreras armamentistas, propaganda, conflictos indirectos (guerras "por delegación"), espionaje y la competencia ideológica entre el capitalismo liberal liderado por EE.UU. y el comunismo soviético liderado por la URSS.`
+  },
+  {
+    pregunta: "Explica la Doctrina Truman y su importancia histórica.",
+    respuestaModelo: `La Doctrina Truman fue enunciada por el presidente Harry S. Truman ante el Congreso en marzo de 1947. Establecía que Estados Unidos debía apoyar a los pueblos libres que resistieran la subyugación por parte de minorías armadas o presiones exteriores, en clara alusión a la expansión soviética.
+
+En la práctica, supuso el envío de ayuda militar y económica a Grecia y Turquía, amenazadas por movimientos comunistas. Esta doctrina definió la política exterior estadounidense de "contención" del comunismo que guiaría sus decisiones durante toda la Guerra Fría, justificando intervenciones en Corea, Vietnam y otros escenarios.`
+  },
+  {
+    pregunta: "¿En qué consistió el Plan Marshall y cuáles fueron sus consecuencias?",
+    respuestaModelo: `El Plan Marshall, propuesto en 1947 por el secretario de Estado George C. Marshall, fue un programa de ayuda económica estadounidense para reconstruir las economías de Europa occidental devastadas por la Segunda Guerra Mundial. Entre 1948 y 1952 se transfirieron unos 13.000 millones de dólares a 16 países europeos.
+
+Sus consecuencias fueron múltiples: aceleró la recuperación económica europea, fortaleció los lazos económicos y políticos con EE.UU., frenó la expansión de los partidos comunistas en países como Francia e Italia, y consolidó la división del continente, ya que la URSS presionó a sus satélites para rechazar la ayuda.`
+  },
+  {
+    pregunta: "Describe el Bloqueo de Berlín (1948–1949) y su resolución.",
+    respuestaModelo: `Tras la Segunda Guerra Mundial, Berlín quedó dividida en cuatro zonas de ocupación (EE.UU., Reino Unido, Francia y URSS), aunque la ciudad se encontraba en pleno territorio soviético. En junio de 1948, Stalin bloqueó todos los accesos terrestres y fluviales a los sectores occidentales, con el objetivo de presionar a los aliados para que abandonaran Berlín.
+
+La respuesta occidental fue el célebre "puente aéreo": durante casi un año, miles de aviones aliados abastecieron a la ciudad mediante más de 200.000 vuelos. En mayo de 1949, la URSS levantó el bloqueo al comprobar su fracaso. El episodio consolidó la división de Alemania y aceleró la creación de la República Federal Alemana.`
+  },
+  {
+    pregunta: "¿Cuál fue el desarrollo y resultado de la Crisis de los Misiles de Cuba (1962)?",
+    respuestaModelo: `En octubre de 1962, aviones espía estadounidenses descubrieron que la URSS estaba instalando misiles nucleares en Cuba, a unos 150 km de Florida. El presidente Kennedy impuso un bloqueo naval y exigió la retirada inmediata. Durante 13 días el mundo estuvo al borde de una guerra nuclear.
+
+La crisis se resolvió mediante un acuerdo: la URSS retiraría los misiles de Cuba a cambio de que EE.UU. se comprometiera a no invadir la isla y retirara sus propios misiles de Turquía. La crisis demostró los peligros de la carrera armamentística e impulsó medidas de comunicación directa entre las superpotencias, como el "teléfono rojo".`
+  },
+  {
+    pregunta: "¿Qué fue la Primavera de Praga y cómo reaccionó la URSS?",
+    respuestaModelo: `La Primavera de Praga fue un período de reformas políticas y liberalización impulsado por el líder comunista checoslovaco Alexander Dubček a partir de enero de 1968. Dubček defendía un "socialismo con rostro humano": mayor libertad de prensa, descentralización económica y cierto pluralismo político dentro del sistema comunista.
+
+La URSS vio estas reformas como una amenaza al control del bloque oriental. En agosto de 1968, tropas del Pacto de Varsovia invadieron Checoslovaquia y aplastaron el movimiento. Dubček fue depuesto y el país retornó a la ortodoxia soviética. El episodio condujo a la formulación de la Doctrina Brezhnev, que afirmaba el derecho soviético a intervenir en cualquier país socialista cuyo sistema se viera amenazado.`
+  },
+  {
+    pregunta: "Explica la carrera espacial entre EE.UU. y la URSS.",
+    respuestaModelo: `La carrera espacial fue una competición tecnológica y propagandística entre las dos superpotencias. Comenzó en 1957 con el lanzamiento soviético del Sputnik, el primer satélite artificial. En 1961, el soviético Yuri Gagarin se convirtió en el primer ser humano en orbitar la Tierra.
+
+EE.UU. respondió acelerando su programa espacial. En julio de 1969, Neil Armstrong y Buzz Aldrin alunizaron con el Apolo 11, el mayor logro de la carrera. La competencia tenía una enorme dimensión simbólica —demostrar la superioridad del propio sistema— además de implicaciones militares directas, ya que los misiles balísticos y los satélites espía derivaban de la misma tecnología.`
+  },
+  {
+    pregunta: "¿Qué reformas impulsó Gorbachov y cómo contribuyeron al fin de la URSS?",
+    respuestaModelo: `Mijaíl Gorbachov, secretario general del PCUS desde 1985, lanzó dos grandes reformas: la Glasnost (transparencia), que permitió la libertad de prensa y la crítica abierta al sistema, y la Perestroika (reestructuración), que buscaba modernizar la economía soviética introduciendo elementos de mercado y descentralización.
+
+Estas reformas desencadenaron fuerzas imparables: afloraron los fracasos históricos del régimen, se aceleraron los movimientos independentistas en las repúblicas soviéticas y los regímenes comunistas del Este de Europa iniciaron su transición, animados por la nueva política soviética de no intervención. En diciembre de 1991, la URSS se disolvió formalmente, dando paso a quince repúblicas independientes.`
+  },
+  {
+    pregunta: "¿Qué fue la Guerra de Corea y por qué es representativa de la dinámica de la Guerra Fría?",
+    respuestaModelo: `La Guerra de Corea (1950–1953) estalló cuando Corea del Norte, apoyada por la URSS y luego por China, invadió Corea del Sur. EE.UU. y sus aliados, bajo bandera de la ONU, acudieron en defensa del Sur. Fue una guerra de "delegación" típica de la Guerra Fría: las superpotencias apoyaban a sus aliados sin enfrentarse directamente para evitar una escalada nuclear.
+
+Tras combates devastadores y grandes avances y retrocesos de ambas partes, se firmó un armisticio en 1953 que restauró la frontera en torno al paralelo 38°. El conflicto ilustra cómo la rivalidad ideológica generó guerras regionales con enormes costes humanos sin resolver la disputa de fondo entre los dos modelos.`
+  },
+  {
+    pregunta: "¿Cómo y cuándo terminó la Guerra Fría?",
+    respuestaModelo: `La Guerra Fría llegó a su fin a través de un proceso gradual en la segunda mitad de los años 80 y principios de los 90. Las reformas de Gorbachov debilitaron el bloque soviético; en 1989, una serie de revoluciones pacíficas derrocaron a los regímenes comunistas del Este de Europa.
+
+El símbolo más poderoso fue la caída del Muro de Berlín el 9 de noviembre de 1989. En 1990 Alemania se reunificó. El último acto fue la disolución formal de la URSS el 25 de diciembre de 1991, cuando Gorbachov dimitió y las repúblicas soviéticas se convirtieron en Estados independientes. El fin de la Guerra Fría dejó a EE.UU. como única superpotencia, inaugurando un nuevo orden mundial.`
+  }
+];
+
+const preguntasClave = [
+  {
+    pregunta: "¿Qué fue la Doctrina Truman?",
+    respuesta: "Política de EE.UU. (1947) de apoyar a los pueblos que resistieran la expansión comunista. Sentó las bases de la estrategia de 'contención' que guió la política exterior estadounidense durante toda la Guerra Fría."
+  },
+  {
+    pregunta: "¿Qué fue el Plan Marshall?",
+    respuesta: "Programa de ayuda económica de EE.UU. (1948–1952) para reconstruir Europa occidental. Transfirió ~13.000 millones de dólares a 16 países y frenó la expansión comunista en el continente."
+  },
+  {
+    pregunta: "¿Qué fue el Telón de Acero?",
+    respuesta: "Metáfora acuñada por Churchill en 1946 para describir la frontera ideológica y física que separaba el bloque soviético del mundo occidental libre, dividiendo Europa en dos realidades opuestas."
+  },
+  {
+    pregunta: "¿Qué fue el Pacto de Varsovia?",
+    respuesta: "Alianza militar del bloque comunista, liderada por la URSS y creada en 1955, como respuesta a la adhesión de Alemania Occidental a la OTAN. Agrupaba a la URSS y sus estados satélite de Europa oriental."
+  },
+  {
+    pregunta: "¿Cuál fue el resultado de la Crisis de los Misiles de Cuba (1962)?",
+    respuesta: "La URSS retiró sus misiles de Cuba; EE.UU. se comprometió a no invadir la isla y retiró sus misiles de Turquía. Se estableció el 'teléfono rojo' para evitar futuras crisis por malentendidos."
+  },
+  {
+    pregunta: "¿Por qué se construyó el Muro de Berlín en 1961?",
+    respuesta: "Para detener la masiva emigración de ciudadanos de Alemania Oriental hacia el oeste (más de 2,5 millones desde 1949). Su construcción dividió físicamente Berlín y se convirtió en el símbolo más poderoso de la Guerra Fría."
+  },
+  {
+    pregunta: "¿Qué fue el Sputnik y qué importancia tuvo?",
+    respuesta: "Primer satélite artificial de la historia, lanzado por la URSS en octubre de 1957. Inició la carrera espacial y demostró que la URSS podía alcanzar cualquier punto del planeta con un misil, generando gran alarma en Occidente."
+  },
+  {
+    pregunta: "¿Qué fue la Coexistencia Pacífica?",
+    respuesta: "Política propugnada por Jrushchov desde 1956: competencia entre bloques sin guerra directa, reconociendo la posibilidad de convivir sin destruirse. Representó una cierta distensión tras los años más tensos de la posguerra."
+  },
+  {
+    pregunta: "¿Qué fue la Primavera de Praga (1968)?",
+    respuesta: "Proceso de reformas liberalizadoras ('socialismo con rostro humano') liderado por Alexander Dubček en Checoslovaquia. Fue aplastado en agosto de 1968 por la invasión de tropas del Pacto de Varsovia."
+  },
+  {
+    pregunta: "¿Qué fue la Doctrina Brezhnev?",
+    respuesta: "Principio soviético formulado tras la Primavera de Praga: la URSS tenía derecho a intervenir en cualquier país del bloque socialista cuyo sistema se viera amenazado. Justificó la soberanía limitada de los países del Este."
+  },
+  {
+    pregunta: "¿Qué fue la Détente?",
+    respuesta: "Período de distensión durante los años 70 entre EE.UU. (Nixon-Kissinger) y la URSS, con acuerdos de limitación de armamentos (SALT I y II), mayor cooperación diplomática y el reconocimiento mutuo de las esferas de influencia."
+  },
+  {
+    pregunta: "¿Qué fue la Perestroika?",
+    respuesta: "Reforma impulsada por Gorbachov desde 1986 para reestructurar la economía soviética, introduciendo transparencia, descentralización y elementos de mercado. Desencadenó cambios que acabaron con la URSS."
+  },
+  {
+    pregunta: "¿Qué fue la Glasnost?",
+    respuesta: "Política de apertura informativa de Gorbachov: libertad de prensa, crítica pública al sistema y reconocimiento de los errores del pasado soviético. Junto a la Perestroika, aceleró el colapso del régimen."
+  },
+  {
+    pregunta: "¿Cuándo y cómo cayó el Muro de Berlín?",
+    respuesta: "El 9 de noviembre de 1989, tras anunciarse que los ciudadanos podían cruzar libremente, multitudes lo derribaron espontáneamente. Simbolizó el derrumbe del comunismo en Europa oriental y aceleró la reunificación alemana."
+  },
+  {
+    pregunta: "¿Cuándo y cómo se disolvió la URSS?",
+    respuesta: "El 25 de diciembre de 1991, Gorbachov dimitió y las 15 repúblicas soviéticas se convirtieron en Estados independientes. Puso fin oficial a la Guerra Fría, dejando a EE.UU. como única superpotencia mundial."
+  }
+];
+
+/* ════════════════════════════════════════════
+   NAVEGACIÓN
+════════════════════════════════════════════ */
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+  if (id === 'test') initTest();
+  if (id === 'desarrollo') initDesarrollo();
+  if (id === 'flashcards') initFlashcards();
+}
+
+/* ════════════════════════════════════════════
+   TEST
+════════════════════════════════════════════ */
+let tQ = [], tIdx = 0, tScore = 0, tAnswered = false;
+
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+function initTest() {
+  tIdx = 0; tScore = 0; tAnswered = false;
+  tQ = shuffle(preguntasTest).map(q => {
+    const mapped = q.opciones.map((o, i) => ({ text: o, orig: i }));
+    const shuffled = shuffle(mapped);
+    return {
+      pregunta: q.pregunta,
+      opciones: shuffled,
+      correcta: shuffled.findIndex(o => o.orig === q.respuestaCorrecta)
+    };
+  });
+  renderQ();
+}
+
+function renderQ() {
+  const el = document.getElementById('test-content');
+  document.getElementById('test-hdr-score').textContent = tScore > 0 ? `✓ ${tScore}` : '';
+
+  if (tIdx >= tQ.length) { renderResultados(); return; }
+
+  const q = tQ[tIdx];
+  const pct = ((tIdx / tQ.length) * 100).toFixed(1);
+  const L = ['A', 'B', 'C', 'D'];
+
+  el.innerHTML = `
+    <div class="prog-track"><div class="prog-fill" id="pf" style="width:${pct}%"></div></div>
+    <p class="q-meta">PREGUNTA ${tIdx + 1} DE ${tQ.length}</p>
+    <p class="q-text">${q.pregunta}</p>
+    <div class="opts">
+      ${q.opciones.map((o, i) => `
+        <button class="opt" id="o${i}" onclick="pick(${i})">
+          <span class="opt-letter">${L[i]}</span>
+          <span>${o.text}</span>
+        </button>`).join('')}
+    </div>
+    <button class="next-btn" id="nbtn" onclick="nextQ()">
+      ${tIdx < tQ.length - 1 ? 'SIGUIENTE →' : 'VER RESULTADO'}
+    </button>
+  `;
+}
+
+function pick(idx) {
+  if (tAnswered) return;
+  tAnswered = true;
+  const q = tQ[tIdx];
+  const ok = idx === q.correcta;
+  if (ok) tScore++;
+
+  document.querySelectorAll('.opt').forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.correcta) b.classList.add('correct');
+    else if (i === idx && !ok) b.classList.add('wrong');
+  });
+
+  document.getElementById('nbtn').style.display = 'block';
+  document.getElementById('test-hdr-score').textContent = `✓ ${tScore}`;
+}
+
+function nextQ() {
+  tIdx++; tAnswered = false; renderQ();
+}
+
+function renderResultados() {
+  const el = document.getElementById('test-content');
+  const pct = Math.round(tScore / preguntasTest.length * 100);
+  const labels = [
+    [80, '¡Excelente trabajo!'],
+    [60, 'Bien hecho'],
+    [40, 'Sigue practicando'],
+    [0,  'Necesitas repasar el tema']
+  ];
+  const label = labels.find(([min]) => pct >= min)[1];
+  el.innerHTML = `
+    <div class="results-wrap">
+      <div class="score-ring">
+        <span class="score-big">${tScore}</span>
+        <span class="score-denom">DE ${preguntasTest.length}</span>
+      </div>
+      <p class="result-title">${label}</p>
+      <p class="result-pct">${pct}% de aciertos</p>
+      <button class="action-btn btn-primary" onclick="initTest()">↺ REINTENTAR</button>
+      <button class="action-btn btn-secondary" onclick="goTo('home')">← MENÚ PRINCIPAL</button>
+    </div>
+  `;
+  document.getElementById('test-hdr-score').textContent = '';
+}
+
+/* ════════════════════════════════════════════
+   DESARROLLO
+════════════════════════════════════════════ */
+function initDesarrollo() {
+  const el = document.getElementById('dev-content');
+  el.innerHTML = `
+    <p class="dev-intro">Responde mentalmente antes de ver la respuesta modelo</p>
+    <div class="dev-list">
+      ${preguntasDesarrollo.map((q, i) => `
+        <div class="dev-item" id="di${i}">
+          <div class="dev-head" onclick="toggleDev(${i})">
+            <span class="dev-num">0${i + 1}</span>
+            <span class="dev-q">${q.pregunta}</span>
+            <span class="dev-icon">+</span>
+          </div>
+          <div class="dev-body">
+            <p class="dev-label">— Respuesta Modelo —</p>
+            <p class="dev-answer-text">${q.respuestaModelo}</p>
+          </div>
+        </div>`).join('')}
+    </div>
+  `;
+}
+
+function toggleDev(i) {
+  const el = document.getElementById(`di${i}`);
+  el.classList.toggle('open');
+}
+
+/* ════════════════════════════════════════════
+   FLASHCARDS
+════════════════════════════════════════════ */
+let fcIdx = 0, fcFlipped = false;
+
+function initFlashcards() {
+  fcIdx = 0; fcFlipped = false;
+  renderFC();
+}
+
+function renderFC() {
+  const el = document.getElementById('fc-content');
+  const total = preguntasClave.length;
+  const q = preguntasClave[fcIdx];
+
+  el.innerHTML = `
+    <p class="fc-meta">TARJETA ${fcIdx + 1} DE ${total}</p>
+    <div class="fc-wrap" onclick="flipFC()">
+      <div class="fc-inner" id="fci">
+        <div class="fc-face fc-front">
+          <p class="fc-face-label">Pregunta</p>
+          <p class="fc-face-text">${q.pregunta}</p>
+        </div>
+        <div class="fc-face fc-back">
+          <p class="fc-face-label">Respuesta</p>
+          <p class="fc-face-text">${q.respuesta}</p>
+        </div>
+      </div>
+    </div>
+    <p class="fc-hint">↻ Toca la tarjeta para girarla</p>
+    <div class="fc-controls">
+      <button class="fc-btn" id="fcprev" onclick="fcNav(-1)" ${fcIdx === 0 ? 'disabled' : ''}>← ANTERIOR</button>
+      <button class="fc-btn" id="fcnext" onclick="fcNav(1)" ${fcIdx === total - 1 ? 'disabled' : ''}>SIGUIENTE →</button>
+    </div>
+    <div class="fc-restart" id="fcrs" style="${fcIdx === total - 1 ? 'display:block' : 'display:none'}">
+      <p class="fc-done-msg">¡Has repasado todas las tarjetas!</p>
+      <button class="action-btn btn-primary" onclick="initFlashcards()">↺ EMPEZAR DE NUEVO</button>
+    </div>
+  `;
+  fcFlipped = false;
+}
+
+function flipFC() {
+  const inner = document.getElementById('fci');
+  if (!inner) return;
+  fcFlipped = !fcFlipped;
+  inner.classList.toggle('flipped', fcFlipped);
+}
+
+function fcNav(dir) {
+  fcIdx += dir;
+  if (fcIdx < 0) fcIdx = 0;
+  if (fcIdx >= preguntasClave.length) fcIdx = preguntasClave.length - 1;
+  renderFC();
+}
+</script>
+</body>
+</html>
